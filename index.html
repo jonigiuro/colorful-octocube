@@ -1,0 +1,168 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Joni.G | threejs test</title>
+<script src="Three.js"></script>
+<script src="RequestAnimationFrame.js"></script>
+<script type='text/javascript' src='DAT.GUI.min.js'></script>
+<script src="jquery-1.6.js"></script>
+<script language="javascript" type="text/javascript" src="Controls.js"></script>
+</head>
+<body style="overflow:hidden;">
+	<div id="reset" style="position:absolute; top:40px; background-color:#f55;color: #fff; font-family: Helvetica, Arial; padding:5px; font-weight:bold">Recalc Cubes</div>
+<script>
+var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
+var NEAR = 5, FAR = 5000;
+		var bigx = new Array();
+		var bigy = new Array();
+		var bigz = new Array();
+		var rotation = 0;
+		var allcubes = new Array();
+		var radius = 50, segments = 16, rings = 16;
+		var isDown = false;
+		var startx, starty;
+		var currentx, currenty;
+    var camera, scene, renderer, sphere,
+    material, ambient, light;
+		var params = {
+			posx: 0,
+			posy: 0,
+			posz: 0,
+			cubes: 0.5
+		};
+    init();
+    animate();
+
+    function init() {
+        camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.z = 1500;
+				camera.position.y = 500;
+				camera.position.x = 500;
+        scene = new THREE.Scene();
+				draw();
+				ambient = new THREE.AmbientLight( 0x444444 );
+				scene.add( ambient );
+				light = new THREE.SpotLight( 0xffffff );
+								light.position.set( 0, 3500, 1000 );
+								light.target.position.set( 0, 0, 0 );
+								light.castShadow = true;
+								scene.add( light );
+        renderer = new THREE.WebGLRenderer({ clearColor: 0xffffff, clearAlpha: 1, antialias: true });
+				//renderer = new THREE.CanvasRenderer({ clearColor: 0x000000, clearAlpha: 1, antialias: true });
+				
+        renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowCameraNear = 3;
+								renderer.shadowCameraFar = camera.far;
+								renderer.shadowCameraFov = 500;
+
+								renderer.shadowMapBias = 0.0039;
+								renderer.shadowMapDarkness = 0.5;
+								renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
+								renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
+
+								renderer.shadowMapEnabled = true;
+								renderer.shadowMapSoft = true;
+        document.body.appendChild( renderer.domElement );
+				var floor_material = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe:false});
+				var floor_geometry = new THREE.CubeGeometry( 5000, .1, 5000 );
+				var floor_mesh = new THREE.Mesh( floor_geometry, floor_material );
+				floor_mesh.castShadow = true;
+				floor_mesh.receiveShadow = true;
+				floor_mesh.position.y = -35;
+				floor_mesh.position.x = 1000;
+				floor_mesh.position.z = -2000;
+				scene.add( floor_mesh );
+				var sphereMaterial = new THREE.MeshLambertMaterial({color: 0x55ff55, wireframe:false});
+					sphere = new THREE.Mesh(
+				    new THREE.SphereGeometry(radius, segments, rings),
+				    sphereMaterial);
+						sphere.position.z = 100;
+						sphere.castShadow = true;
+					scene.addChild(sphere);
+    }
+
+function draw(){
+			for(s=0;s<allcubes.length;s++){
+				scene.removeChild(allcubes[s]);
+			}
+			//material = new THREE.MeshLambertMaterial( { wireframe: false, opacity: 1 } );
+			material = new THREE.MeshNormalMaterial( { wireframe: false, opacity: 1 } );
+			material.castshadow
+			for(q=0;q<10;q++){
+			bigz[q] = Math.random();
+			if (bigz[q] > params.cubes){
+			for(i=0;i<10;i++){
+				bigx[i] = Math.random();
+				if (bigx[i] > params.cubes){
+				for(p=0;p<10;p++){
+					bigy[p] = Math.random();
+					if(bigy[p] > params.cubes){
+						var geometry = new THREE.CubeGeometry( 70, 70, 70 );
+						var mesh = new THREE.Mesh( geometry, material );
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+						mesh.position.y = 100 * p;
+						mesh.position.x = 100 * i;
+						mesh.position.z = -100 * q;
+						allcubes.push(mesh);
+        		scene.add( mesh );
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+	$(document).mousemove(function(e){
+		currentx = e.clientX;
+		currenty = e.clientY;
+	})
+	
+	$(document).mousedown(function(e){
+		startx=e.clientX;
+		starty=e.clientY;
+		isDown=true
+	});
+	
+	$(document).mouseup(function(e){
+		isDown=false
+	});
+	$('#reset').click(function(){
+		draw();
+	})
+		
+					
+  function animate() {
+		if(isDown == true){
+		camera.position.x += (currentx-startx) / 15;
+		camera.position.y += (currenty-starty) / 15;
+		camera.lookAt( new THREE.Vector3( 500,500,0 ));
+	}
+		sphere.position.x = params.posx;
+    sphere.position.y = params.posy;
+		sphere.position.z = params.posz;
+		//light.position.x = params.posx;
+		//light.position.y = params.posy;
+		//light.position.z = params.posz;
+			//sphere.position.x += Math.random()*3;
+      //sphere.position.y += Math.random()*3;
+			//sphere.position.z += Math.random()*-3;
+		rotation += 0.01;
+			for(t=0; t < allcubes.length; t++){
+				//	allcubes[t].rotation.y = rotation;
+				allcubes[t].lookAt(new THREE.Vector3( sphere.position.x,sphere.position.y,sphere.position.z ))
+			}
+      requestAnimationFrame( animate );
+      render();
+    }
+
+    function render() {
+        renderer.render( scene, camera );
+    }
+
+</script>
+
+</body>
+</html>
