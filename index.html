@@ -2,53 +2,64 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>Joni.G | threejs test</title>
+<title>Joni.G | Star</title>
 <script src="Three.js"></script>
 <script src="RequestAnimationFrame.js"></script>
 <script type='text/javascript' src='DAT.GUI.min.js'></script>
 <script src="jquery-1.6.js"></script>
 <script language="javascript" type="text/javascript" src="Controls.js"></script>
 </head>
-<body style="overflow:hidden;">
-	<div id="reset" style="position:absolute; top:40px; background-color:#f55;color: #fff; font-family: Helvetica, Arial; padding:5px; font-weight:bold">Recalc Cubes</div>
+<body style="overflow:hidden;background-image:url('back.jpg')">
+	<div id="info" style="position:absolute; top:40px; font-family: Helvetica, Arial; padding:5px; color:#fff;background-color:#f55;font-size:0.6em;width:100px">
+		<em>-- Chrome only --</em><br />
+		Use scroll wheel to move camera on z<br /><br />
+		Click to move camera in other directions <br /><br />
+		Use the UI on the top right to change the trails length (the less -> the longer)<br /><br />
+		Move your mouse to create the trail ( the center of the monitor makes a straight trail, otherwise it's going to tend to the left or to the right)
+	</div>
+	<div id="reset" style="position:absolute; top:10px; font-family: Helvetica, Arial; padding:5px; color:#fff;background-color:#f55;font-size:0.6em;width:100px">
+		<strong>RESET</strong>
+	</div>
 <script>
 var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
-var NEAR = 5, FAR = 5000;
-		var bigx = new Array();
-		var bigy = new Array();
-		var bigz = new Array();
-		var rotation = 0;
-		var allcubes = new Array();
-		var radius = 50, segments = 16, rings = 16;
-		var isDown = false;
-		var startx, starty;
-		var currentx, currenty;
-    var camera, scene, renderer, sphere,
-    material, ambient, light;
+var NEAR = 5, FAR = 40000;
+var create = true;
+var depth = 700;
+var col = 0;
+var maxcubes = 1000;
+var allCubes = new Array();
+var colorthing = '0xffffff';
+var shrink = 0.05;
+var radius = 500;
+var currentX = 0;
+var currentY = 0;
+var oldcount = 0;
+var camera, scene, renderer, sphere,
+material, ambient, light;
 		var params = {
-			posx: 0,
-			posy: 0,
-			posz: 0,
-			cubes: 0.5
+			maxcubes: 1000,
+			shrink: 0.05
 		};
     init();
     animate();
 
     function init() {
         camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-        camera.position.z = 1500;
-				camera.position.y = 500;
-				camera.position.x = 500;
+        camera.position.z = 400;
+				camera.position.y = 0;
+				camera.position.x = 0;
+				camera.rotation.x=0;
+				camera.rotation.y=0;
+				camera.rotation.z=0;
         scene = new THREE.Scene();
-				draw();
 				ambient = new THREE.AmbientLight( 0x444444 );
 				scene.add( ambient );
 				light = new THREE.SpotLight( 0xffffff );
-								light.position.set( 0, 3500, 1000 );
+								light.position.set( 0, 350, 100 );
 								light.target.position.set( 0, 0, 0 );
 								light.castShadow = true;
 								scene.add( light );
-        renderer = new THREE.WebGLRenderer({ clearColor: 0xffffff, clearAlpha: 1, antialias: true });
+        renderer = new THREE.WebGLRenderer({ clearColor: 0x555555, clearAlpha: 0, antialias: true });
 				//renderer = new THREE.CanvasRenderer({ clearColor: 0x000000, clearAlpha: 1, antialias: true });
 				
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -64,105 +75,149 @@ var NEAR = 5, FAR = 5000;
 								renderer.shadowMapEnabled = true;
 								renderer.shadowMapSoft = true;
         document.body.appendChild( renderer.domElement );
-				var floor_material = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe:false});
-				var floor_geometry = new THREE.CubeGeometry( 5000, .1, 5000 );
-				var floor_mesh = new THREE.Mesh( floor_geometry, floor_material );
-				floor_mesh.castShadow = true;
-				floor_mesh.receiveShadow = true;
-				floor_mesh.position.y = -35;
-				floor_mesh.position.x = 1000;
-				floor_mesh.position.z = -2000;
-				scene.add( floor_mesh );
-				var sphereMaterial = new THREE.MeshLambertMaterial({color: 0x55ff55, wireframe:false});
-					sphere = new THREE.Mesh(
-				    new THREE.SphereGeometry(radius, segments, rings),
-				    sphereMaterial);
-						sphere.position.z = 100;
-						sphere.castShadow = true;
-					scene.addChild(sphere);
+				var material = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
+				var geometry = new THREE.CubeGeometry( 7, 7, 7 );
+				var mesh = new THREE.Mesh( geometry, material );
+				mesh.castShadow = false;
+				mesh.receiveShadow = false;
+				mesh.position.y = 0;
+				mesh.position.x = 0;
+				mesh.position.z = -0;
+				mesh.rotation.z = 3;
+				//material.castshadow
+				allCubes.push(mesh)
+				scene.add( mesh );
+				var boundmaterial = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
+				var boundgeometry = new THREE.CubeGeometry( 600, 600, 600 );
+				var boundmesh = new THREE.Mesh( boundgeometry, boundmaterial );
+				boundmesh.castShadow = false;
+				boundmesh.receiveShadow = false;
+				boundmesh.position.y = 0;
+				boundmesh.position.x = 0;
+				boundmesh.position.z = -0;
+				boundmesh.rotation.z = 0;
+				//material.castshadow
+				//allCubes.push(boundmesh)
+				//scene.add( boundmesh );
     }
 
-function draw(){
-			for(s=0;s<allcubes.length;s++){
-				scene.removeChild(allcubes[s]);
-			}
-			//material = new THREE.MeshLambertMaterial( { wireframe: false, opacity: 1 } );
-			material = new THREE.MeshNormalMaterial( { wireframe: false, opacity: 1 } );
-			material.castshadow
-			for(q=0;q<10;q++){
-			bigz[q] = Math.random();
-			if (bigz[q] > params.cubes){
-			for(i=0;i<10;i++){
-				bigx[i] = Math.random();
-				if (bigx[i] > params.cubes){
-				for(p=0;p<10;p++){
-					bigy[p] = Math.random();
-					if(bigy[p] > params.cubes){
-						var geometry = new THREE.CubeGeometry( 70, 70, 70 );
-						var mesh = new THREE.Mesh( geometry, material );
-						mesh.castShadow = true;
-						mesh.receiveShadow = true;
-						mesh.position.y = 100 * p;
-						mesh.position.x = 100 * i;
-						mesh.position.z = -100 * q;
-						allcubes.push(mesh);
-        		scene.add( mesh );
-						}
-					}
-				}
-			}
-		}
-	}
+document.onmousewheel = wheel;
+
+function wheel(event){
+	radius += -1 * event.wheelDelta/2;
+	camera.position.x = radius * Math.sin( currentX * Math.PI / 360 );
+	camera.position.y = radius * Math.sin( currentY * Math.PI / window.innerHeight / 2 );
+	camera.position.z = radius * Math.cos( currentX * Math.PI / 360 );
 }
 
-	$(document).mousemove(function(e){
-		currentx = e.clientX;
-		currenty = e.clientY;
-	})
-	
-	$(document).mousedown(function(e){
-		startx=e.clientX;
-		starty=e.clientY;
-		isDown=true
-	});
-	
-	$(document).mouseup(function(e){
-		isDown=false
-	});
-	$('#reset').click(function(){
-		draw();
-	})
+$("#reset").click(function(){	
+		oldcount = allCubes.length;
+		//scene.removeChild(allCubes[q])
 		
-					
-  function animate() {
-		if(isDown == true){
-		camera.position.x += (currentx-startx) / 15;
-		camera.position.y += (currenty-starty) / 15;
-		camera.lookAt( new THREE.Vector3( 500,500,0 ));
-	}
-		sphere.position.x = params.posx;
-    sphere.position.y = params.posy;
-		sphere.position.z = params.posz;
-		//light.position.x = params.posx;
-		//light.position.y = params.posy;
-		//light.position.z = params.posz;
-			//sphere.position.x += Math.random()*3;
-      //sphere.position.y += Math.random()*3;
-			//sphere.position.z += Math.random()*-3;
-		rotation += 0.01;
-			for(t=0; t < allcubes.length; t++){
-				//	allcubes[t].rotation.y = rotation;
-				allcubes[t].lookAt(new THREE.Vector3( sphere.position.x,sphere.position.y,sphere.position.z ))
-			}
-      requestAnimationFrame( animate );
-      render();
-    }
+	var material = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
+	var geometry = new THREE.CubeGeometry( 7, 7, 7 );
+	var mesh = new THREE.Mesh( geometry, material );
+	mesh.castShadow = false;
+	mesh.receiveShadow = false;
+	mesh.position.y = 0;
+	mesh.position.x = 0;
+	mesh.position.z = -0;
+	mesh.rotation.z = 3;
+	//material.castshadow
+	allCubes.push(mesh)
+	return false;
+})
 
-    function render() {
-        renderer.render( scene, camera );
-    }
+
+
+$(document).mousemove(function(e){
+	if(create == true){
+		draw(e.clientX,e.clientY);
+	}else{
+		currentX = e.clientX;
+		currentY = e.clientY;
+
+		camera.position.x = radius * Math.sin( ( e.clientX ) * Math.PI / 360 );
+		camera.position.y = radius * Math.sin( ( e.clientY ) * Math.PI / window.innerHeight / 2 );
+		camera.position.z = radius * Math.cos( ( e.clientX ) * Math.PI / 360 );
+	}
+})
+
+$(document).click(function(e){
+	create =! create
+})
+
+function draw(clientX,clientY){
+	col++;
+	var addedMaterial = new THREE.MeshLambertMaterial( { wireframe: false, opacity: 1, color: colorthing } );
+	var addedGeom = new THREE.CubeGeometry( 7, 7, 7 );
+	var addedMesh = new THREE.Mesh( addedGeom, addedMaterial );
+	addedMesh.castShadow = true;
+	addedMesh.receiveShadow = true;
+	addedMesh.position.y = allCubes[allCubes.length - 1].position.y + 7 *allCubes[allCubes.length - 1].scale.x * (Math.cos(allCubes[allCubes.length - 1].rotation.z));
+	addedMesh.position.x = allCubes[allCubes.length - 1].position.x + 7 *allCubes[allCubes.length - 1].scale.x * (Math.sin(allCubes[allCubes.length - 1].rotation.z)) * -1;
+	addedMesh.position.z = allCubes[allCubes.length - 1].position.z + 7 *allCubes[allCubes.length - 1].scale.x * (Math.cos(allCubes[allCubes.length - 1].rotation.y)) * -1;
+	addedMesh.rotation.x = 0;
+	addedMesh.rotation.y = allCubes[allCubes.length - 1].rotation.y + 0.1;
+	addedMesh.rotation.z = allCubes[allCubes.length - 1].rotation.z + (clientX / window.innerWidth) - 0.5;
+	addedMesh.scale.x = allCubes[allCubes.length - 1].scale.x - params.shrink;
+	addedMesh.scale.y = allCubes[allCubes.length - 1].scale.x - 0.01;
+	addedMesh.scale.z = allCubes[allCubes.length - 1].scale.x - 0.01;
+	if(addedMesh.scale.x < 0){
+		resetCube(addedMesh)
+	}
+	addedMesh.castShadow = true;
+	addedMesh.recieveShadow = true;
+	allCubes.push(addedMesh)
+	scene.add( addedMesh );
+}		
+
+function resetCube(addedMesh){
+	changecolor();
+	addedMesh.position.y = 0
+	addedMesh.position.x = 0
+	addedMesh.position.z = 0
+	addedMesh.scale.x=1;
+	addedMesh.scale.y=1;
+	addedMesh.scale.z=1;
+}
+
+function destroyCubes(){
+	for(s=0;s<oldcount;s++){
+		allCubes[s].scale.y = allCubes[s].scale.y * .9
+		allCubes[s].scale.x = allCubes[s].scale.x * .9
+		allCubes[s].scale.z = allCubes[s].scale.z * .9
+		allCubes[s].position.y = allCubes[s].position.y * 1.02
+		allCubes[s].position.x = allCubes[s].position.x * 1.02
+		allCubes[s].position.z = allCubes[s].position.z * 1.02
+	}
+
+}
+function changecolor(){
+	colorthing = '0x'+ Math.floor((col%256-256)*(-1)).toString(16)+ Math.floor(col%128).toString(16)+ Math.floor(col%256).toString(16)
+}
+
+function animate() {
+
+	if(allCubes.length > params.maxcubes){
+		scene.removeChild(allCubes[allCubes.length - params.maxcubes])
+	}
+	if(create == true){
+	//	camera.position.x=allCubes[allCubes.length - 1].position.x
+	//	camera.position.y=allCubes[allCubes.length - 1].position.y
+	//	camera.position.z=allCubes[allCubes.length - 1].position.z + 700
+	}
+	camera.lookAt(new THREE.Vector3(0,0,0))
+	destroyCubes();
+		
+  requestAnimationFrame( animate );
+  render();
+}
+
+function render() {
+   renderer.render( scene, camera );
+}
 
 </script>
-
 </body>
 </html>
