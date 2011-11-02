@@ -8,19 +8,34 @@
 <script type='text/javascript' src='DAT.GUI.min.js'></script>
 <script src="jquery-1.6.js"></script>
 <script language="javascript" type="text/javascript" src="Controls.js"></script>
+<style type="text/css">
+body{overflow:hidden;background-image:url('back.jpg');}
+#info{position:absolute; top:40px; left:10px; font-family: Helvetica, Arial; padding:5px;color:#fff;width:200px}
+#reset{position:absolute; top:10px; left:10px;font-family: Helvetica, Arial; padding:5px; color:#fff;width:65px; text-align:center}
+.rounded{-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px}
+#quest{position:absolute; top:10px; left:90px; font-family: Helvetica, Arial; padding:5px; color:#fff;width:20px; text-align:center}
+.rounded{-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px; border:1px solid #fff; background-color:#f44;font-size:0.7em;}
+#author{font-size:0.8em;}
+</style>
 </head>
-<body style="overflow:hidden;background-image:url('back.jpg')">
-	<div id="info" style="position:absolute; top:40px; font-family: Helvetica, Arial; padding:5px; color:#fff;background-color:#f55;font-size:0.6em;width:100px">
-		<em>-- Chrome only --</em><br />
-		Use scroll wheel to move camera on z<br /><br />
-		Click to move camera in other directions <br /><br />
-		Use the UI on the top right to change the trails length (the less -> the longer)<br /><br />
-		Move your mouse to create the trail ( the center of the monitor makes a straight trail, otherwise it's going to tend to the left or to the right)
-	</div>
-	<div id="reset" style="position:absolute; top:10px; font-family: Helvetica, Arial; padding:5px; color:#fff;background-color:#f55;font-size:0.6em;width:100px">
+<body marginwidth="0" marginheight="0" leftmargin="0" topmargin="0">
+	<div id="reset" class="rounded">
 		<strong>RESET</strong>
 	</div>
+	<div id="quest" class="rounded">?</div>
+	<div id="info" class="rounded">
+		<strong><em>-- Chrome only --</em></strong><br /><br />
+		Use scroll wheel to zoom<br /><br />
+		Click to orbit camera <br /><br />
+		Use the UI on the top right to change the trails length<br /><br />
+		Move your mouse to create the trail<br /><br />
+		Click on "Reset" to start a new "thing"<br /><br />
+		One direction is randomized, so you can only decide to turn left or right<br /><br />
+		<hr />
+		<span id="author">experiment by Jonas Grumann</span><br />
+	</div>
 <script>
+//THANKS TO MRDOOB FOR CREATING THREEJS
 var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
 var NEAR = 5, FAR = 40000;
 var create = true;
@@ -29,21 +44,25 @@ var col = 0;
 var maxcubes = 1000;
 var allCubes = new Array();
 var colorthing = '0xffffff';
-var shrink = 0.05;
+var shrink = 40;
 var radius = 500;
 var currentX = 0;
 var currentY = 0;
 var oldcount = 0;
 var camera, scene, renderer, sphere,
 material, ambient, light;
+//Thank you DAT.GUI!!
 		var params = {
 			maxcubes: 1000,
-			shrink: 0.05
+			shrink: 40
 		};
-    init();
-    animate();
-
+//Initialize scene, cameras, etc
+init();
+//start the animation loop
+animate();
     function init() {
+		//hide the info box (ugly)
+			$('#info').slideUp(0)
         camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
         camera.position.z = 400;
 				camera.position.y = 0;
@@ -57,24 +76,22 @@ material, ambient, light;
 				light = new THREE.SpotLight( 0xffffff );
 								light.position.set( 0, 350, 100 );
 								light.target.position.set( 0, 0, 0 );
-								light.castShadow = true;
+								light.castShadow = false;
 								scene.add( light );
-        renderer = new THREE.WebGLRenderer({ clearColor: 0x555555, clearAlpha: 0, antialias: true });
-				//renderer = new THREE.CanvasRenderer({ clearColor: 0x000000, clearAlpha: 1, antialias: true });
+        renderer = new THREE.WebGLRenderer({ clearColor: 0x555555, clearAlpha: 0, antialias: false });
 				
         renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowCameraNear = 3;
 								renderer.shadowCameraFar = camera.far;
 								renderer.shadowCameraFov = 500;
-
 								renderer.shadowMapBias = 0.0039;
 								renderer.shadowMapDarkness = 0.5;
 								renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
 								renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
-
 								renderer.shadowMapEnabled = true;
 								renderer.shadowMapSoft = true;
         document.body.appendChild( renderer.domElement );
+				//Add the starting cube in the center - I love this little guy
 				var material = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
 				var geometry = new THREE.CubeGeometry( 7, 7, 7 );
 				var mesh = new THREE.Mesh( geometry, material );
@@ -82,27 +99,39 @@ material, ambient, light;
 				mesh.receiveShadow = false;
 				mesh.position.y = 0;
 				mesh.position.x = 0;
-				mesh.position.z = -0;
+				mesh.position.z = 0;
 				mesh.rotation.z = 3;
-				//material.castshadow
 				allCubes.push(mesh)
 				scene.add( mesh );
-				var boundmaterial = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
-				var boundgeometry = new THREE.CubeGeometry( 600, 600, 600 );
-				var boundmesh = new THREE.Mesh( boundgeometry, boundmaterial );
-				boundmesh.castShadow = false;
-				boundmesh.receiveShadow = false;
-				boundmesh.position.y = 0;
-				boundmesh.position.x = 0;
-				boundmesh.position.z = -0;
-				boundmesh.rotation.z = 0;
-				//material.castshadow
-				//allCubes.push(boundmesh)
-				//scene.add( boundmesh );
     }
+//NAVIGATION START
+$('#reset').mouseover(function(e){
+	$(this).css('color','#f55');
+	$(this).css('backgroundColor','#fff');
+	$(this).css('cursor','pointer');
+})
 
+$('#reset').mouseout(function(e){
+	$(this).css('color','#fff');
+	$(this).css('backgroundColor','#f55');
+})
+
+$('#quest').mouseover(function(e){
+	$(this).css('color','#f55');
+	$(this).css('backgroundColor','#fff');
+	$(this).css('cursor','pointer');
+})
+
+$('#quest').mouseout(function(e){
+	$(this).css('color','#fff');
+	$(this).css('backgroundColor','#f55');
+})
+
+$('#quest').toggle(function(e){
+	$('#info').slideDown()},function(e){$('#info').slideUp()});
 document.onmousewheel = wheel;
-
+//NAVIGATION END
+//Mousewheel, I only tested it on an iMac with a Logitech mouse, don't know if it'll work for you
 function wheel(event){
 	radius += -1 * event.wheelDelta/2;
 	camera.position.x = radius * Math.sin( currentX * Math.PI / 360 );
@@ -111,9 +140,9 @@ function wheel(event){
 }
 
 $("#reset").click(function(){	
-		oldcount = allCubes.length;
-		//scene.removeChild(allCubes[q])
-		
+	//Change this variable, the actual removing is done in "destroyCubes()"
+	oldcount = allCubes.length;
+	//Add a new starting cube
 	var material = new THREE.MeshBasicMaterial( { wireframe: true, opacity: 1 } );
 	var geometry = new THREE.CubeGeometry( 7, 7, 7 );
 	var mesh = new THREE.Mesh( geometry, material );
@@ -127,16 +156,15 @@ $("#reset").click(function(){
 	allCubes.push(mesh)
 	return false;
 })
-
-
-
+//Adding the cubes
 $(document).mousemove(function(e){
 	if(create == true){
 		draw(e.clientX,e.clientY);
 	}else{
+		//setting these for the camera zoom function
 		currentX = e.clientX;
 		currentY = e.clientY;
-
+		//Move the camera
 		camera.position.x = radius * Math.sin( ( e.clientX ) * Math.PI / 360 );
 		camera.position.y = radius * Math.sin( ( e.clientY ) * Math.PI / window.innerHeight / 2 );
 		camera.position.z = radius * Math.cos( ( e.clientX ) * Math.PI / 360 );
@@ -144,30 +172,35 @@ $(document).mousemove(function(e){
 })
 
 $(document).click(function(e){
+	//stop creating cubes when the camera is moving
 	create =! create
 })
 
 function draw(clientX,clientY){
-	col++;
+	//col is the variable I use for randomizing the color of the tentacles 
+	col ++;
 	var addedMaterial = new THREE.MeshLambertMaterial( { wireframe: false, opacity: 1, color: colorthing } );
 	var addedGeom = new THREE.CubeGeometry( 7, 7, 7 );
 	var addedMesh = new THREE.Mesh( addedGeom, addedMaterial );
-	addedMesh.castShadow = true;
-	addedMesh.receiveShadow = true;
+	addedMesh.castShadow = false;
+	addedMesh.receiveShadow = false;
+	//New cubes position --
 	addedMesh.position.y = allCubes[allCubes.length - 1].position.y + 7 *allCubes[allCubes.length - 1].scale.x * (Math.cos(allCubes[allCubes.length - 1].rotation.z));
 	addedMesh.position.x = allCubes[allCubes.length - 1].position.x + 7 *allCubes[allCubes.length - 1].scale.x * (Math.sin(allCubes[allCubes.length - 1].rotation.z)) * -1;
 	addedMesh.position.z = allCubes[allCubes.length - 1].position.z + 7 *allCubes[allCubes.length - 1].scale.x * (Math.cos(allCubes[allCubes.length - 1].rotation.y)) * -1;
+	//Rotation
 	addedMesh.rotation.x = 0;
 	addedMesh.rotation.y = allCubes[allCubes.length - 1].rotation.y + 0.1;
 	addedMesh.rotation.z = allCubes[allCubes.length - 1].rotation.z + (clientX / window.innerWidth) - 0.5;
-	addedMesh.scale.x = allCubes[allCubes.length - 1].scale.x - params.shrink;
+	addedMesh.scale.x = allCubes[allCubes.length - 1].scale.x - 1/params.shrink;
 	addedMesh.scale.y = allCubes[allCubes.length - 1].scale.x - 0.01;
 	addedMesh.scale.z = allCubes[allCubes.length - 1].scale.x - 0.01;
+	//Start a new tentacle when the size of this is too little
 	if(addedMesh.scale.x < 0){
 		resetCube(addedMesh)
 	}
-	addedMesh.castShadow = true;
-	addedMesh.recieveShadow = true;
+	addedMesh.castShadow = false;
+	addedMesh.recieveShadow = false;
 	allCubes.push(addedMesh)
 	scene.add( addedMesh );
 }		
@@ -184,30 +217,25 @@ function resetCube(addedMesh){
 
 function destroyCubes(){
 	for(s=0;s<oldcount;s++){
-		allCubes[s].scale.y = allCubes[s].scale.y * .9
-		allCubes[s].scale.x = allCubes[s].scale.x * .9
-		allCubes[s].scale.z = allCubes[s].scale.z * .9
-		allCubes[s].position.y = allCubes[s].position.y * 1.02
-		allCubes[s].position.x = allCubes[s].position.x * 1.02
-		allCubes[s].position.z = allCubes[s].position.z * 1.02
+		allCubes[s].scale.y = allCubes[s].scale.y * .9;
+		allCubes[s].scale.x = allCubes[s].scale.x * .9;
+		allCubes[s].scale.z = allCubes[s].scale.z * .9;
+		allCubes[s].position.y = allCubes[s].position.y * 1.02;
+		allCubes[s].position.x = allCubes[s].position.x * 1.02;
+		allCubes[s].position.z = allCubes[s].position.z * 1.02;
 	}
 
 }
 function changecolor(){
+	//Semi-randomizing colors
 	colorthing = '0x'+ Math.floor((col%256-256)*(-1)).toString(16)+ Math.floor(col%128).toString(16)+ Math.floor(col%256).toString(16)
 }
 
 function animate() {
-
 	if(allCubes.length > params.maxcubes){
 		scene.removeChild(allCubes[allCubes.length - params.maxcubes])
 	}
-	if(create == true){
-	//	camera.position.x=allCubes[allCubes.length - 1].position.x
-	//	camera.position.y=allCubes[allCubes.length - 1].position.y
-	//	camera.position.z=allCubes[allCubes.length - 1].position.z + 700
-	}
-	camera.lookAt(new THREE.Vector3(0,0,0))
+	camera.lookAt(new THREE.Vector3(0,0,0));
 	destroyCubes();
 		
   requestAnimationFrame( animate );
