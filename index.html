@@ -9,19 +9,20 @@
 <script src="jquery-1.6.js"></script>
 <script language="javascript" type="text/javascript" src="Controls.js"></script>
 <style type="text/css">
-body{overflow:hidden;background-image:url('back.jpg');}
-#info{position:absolute; top:40px; left:10px; font-family: Helvetica, Arial; padding:5px;color:#fff;width:200px}
-#reset{position:absolute; top:10px; left:10px;font-family: Helvetica, Arial; padding:5px; color:#fff;width:65px; text-align:center}
-.rounded{-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px}
-#quest{position:absolute; top:10px; left:90px; font-family: Helvetica, Arial; padding:5px; color:#fff;width:20px; text-align:center}
-.rounded{-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px; border:1px solid #fff; background-color:#f44;font-size:0.7em;}
-#author{font-size:0.8em;}
+body{overflow:hidden;background-image:url('back.jpg');font-family:"Helvetica","Arial","Verdana";}
+#reset{position:absolute;top:0px;left:180px;background-color:#333333;padding:5px;color:#ffffff;cursor:pointer;}
+#reset:hover{background-color:#fff;color:#333;}
+#infodiv{position:absolute;left:0px;padding:5px;color:#ffffff;}
 </style>
 </head>
 <body marginwidth="0" marginheight="0" leftmargin="0" topmargin="0">
-	<div id="reset" class="rounded">
-		<strong>RESET</strong>
+	<div id="infodiv">
+		Click anywhere to pause
 	</div>
+	<div id="reset">
+		Reset
+	</div>
+	
 <script>
 //THANKS TO MRDOOB FOR CREATING THREEJS
 var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
@@ -37,6 +38,7 @@ var radius = 500;
 var currentX = 0;
 var currentY = 0;
 var oldcount = 0;
+var create = true;
 var camera, scene, renderer, sphere,
 material, ambient, light;
 //Thank you DAT.GUI!!
@@ -62,10 +64,11 @@ animate();
 				ambient = new THREE.AmbientLight( 0x444444 );
 				scene.add( ambient );
 				light = new THREE.SpotLight( 0xffffff );
-								light.position.set( 0, 350, 100 );
-								light.target.position.set( 0, 0, 0 );
-								light.castShadow = false;
-								scene.add( light );
+					light.position.set( 0, 350, 100 );
+					light.target.position.set( 0, 0, 0 );
+					light.castShadow = false;
+					scene.add( light );
+
         renderer = new THREE.WebGLRenderer({ clearColor: 0x555555, clearAlpha: 0, antialias: false });
 				
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -92,34 +95,10 @@ animate();
 				allCubes.push(mesh)
 				scene.add( mesh );
     }
-//NAVIGATION START
-$('#reset').mouseover(function(e){
-	$(this).css('color','#f55');
-	$(this).css('backgroundColor','#fff');
-	$(this).css('cursor','pointer');
-})
 
-$('#reset').mouseout(function(e){
-	$(this).css('color','#fff');
-	$(this).css('backgroundColor','#f55');
-})
 
-$('#quest').mouseover(function(e){
-	$(this).css('color','#f55');
-	$(this).css('backgroundColor','#fff');
-	$(this).css('cursor','pointer');
-})
-
-$('#quest').mouseout(function(e){
-	$(this).css('color','#fff');
-	$(this).css('backgroundColor','#f55');
-})
-
-$('#quest').toggle(function(e){
-	$('#info').slideDown()},function(e){$('#info').slideUp()});
 document.onmousewheel = wheel;
-//NAVIGATION END
-//Mousewheel, I only tested it on an iMac with a Logitech mouse, don't know if it'll work for you
+
 function wheel(event){
 	radius += -1 * event.wheelDelta/2;
 	camera.position.x = radius * Math.sin( currentX * Math.PI / 360 );
@@ -153,7 +132,9 @@ $(document).mousemove(function(e){
 		camera.position.y = radius * Math.sin( ( e.clientY ) * Math.PI / window.innerHeight / 2 );
 		camera.position.z = radius * Math.cos( ( e.clientX ) * Math.PI / 360 );
 })
-
+$(document).click(function(){
+	create = !create;
+})
 
 function draw(clientX,clientY){
 	//col is the variable I use for randomizing the color of the tentacles 
@@ -207,12 +188,14 @@ function destroyCubes(){
 
 }
 function changecolor(){
-	//Semi-randomizing colors
-	colorthing = '0x'+ Math.floor((col%256-256)*(-1)).toString(16)+ Math.floor(col%128).toString(16)+ Math.floor(col%256).toString(16)
+	//Randomize colors
+	colorthing = '0x'+ Math.floor((col%256-256)*(-1)).toString(16)+ Math.floor(col%128).toString(16)+ Math.floor(col%256).toString(16);
 }
 
 function animate() {
-	draw(direction,direction);
+	if (create){
+		draw(direction,direction);
+	}
 
 	if(allCubes.length > params.maxcubes){
 		scene.remove(allCubes[allCubes.length - params.maxcubes])
