@@ -38,7 +38,7 @@ body{overflow:hidden;background-image:url('back.jpg');}
 //THANKS TO MRDOOB FOR CREATING THREEJS
 var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
 var NEAR = 5, FAR = 40000;
-var create = true;
+var direction = 1000;
 var depth = 700;
 var col = 0;
 var maxcubes = 1000;
@@ -158,23 +158,14 @@ $("#reset").click(function(){
 })
 //Adding the cubes
 $(document).mousemove(function(e){
-	if(create == true){
-		draw(e.clientX,e.clientY);
-	}else{
-		//setting these for the camera zoom function
-		currentX = e.clientX;
+	currentX = e.clientX;
 		currentY = e.clientY;
 		//Move the camera
 		camera.position.x = radius * Math.sin( ( e.clientX ) * Math.PI / 360 );
 		camera.position.y = radius * Math.sin( ( e.clientY ) * Math.PI / window.innerHeight / 2 );
 		camera.position.z = radius * Math.cos( ( e.clientX ) * Math.PI / 360 );
-	}
 })
 
-$(document).click(function(e){
-	//stop creating cubes when the camera is moving
-	create =! create
-})
 
 function draw(clientX,clientY){
 	//col is the variable I use for randomizing the color of the tentacles 
@@ -206,6 +197,7 @@ function draw(clientX,clientY){
 }		
 
 function resetCube(addedMesh){
+	direction = Math.random() * 400 + 600;
 	changecolor();
 	addedMesh.position.y = 0
 	addedMesh.position.x = 0
@@ -232,8 +224,10 @@ function changecolor(){
 }
 
 function animate() {
+	draw(direction,direction);
+
 	if(allCubes.length > params.maxcubes){
-		scene.removeChild(allCubes[allCubes.length - params.maxcubes])
+		scene.remove(allCubes[allCubes.length - params.maxcubes])
 	}
 	camera.lookAt(new THREE.Vector3(0,0,0));
 	destroyCubes();
